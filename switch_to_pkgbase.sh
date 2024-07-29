@@ -56,6 +56,26 @@ remove_packages() {
   done < "$pkg_list_file"
 }
 
+# Handle .pkgsave files
+handle_pkgsave_files() {
+  echo "Handling .pkgsave files..."
+
+  # Essential steps for critical files
+  sudo cp /etc/ssh/sshd_config.pkgsave /etc/ssh/sshd_config
+  sudo cp /etc/master.passwd.pkgsave /etc/master.passwd
+  sudo cp /etc/group.pkgsave /etc/group
+  sudo pwd_mkdb -p /etc/master.passwd
+  sudo service sshd restart
+  sudo cp /etc/sysctl.conf.pkgsave /etc/sysctl.conf
+
+  # Interactive approach for other .pkgsave files
+  sudo find / -name "*.pkgsave" -type f -exec sh -c 'f="{}"; echo "==== OLD ===="; ls -l "${f}"; md5sum "${f}"; echo "==== NEW ===="; ls -l "${f%.pkgsave}"; md5sum "${f%.pkgsave}"; cp -vi "${f}" "${f%.pkgsave}"' \;
+
+  # Non-interactive approach to delete .pkgsave files and handle linker.hints
+  sudo find / -name "*.pkgsave" -delete
+  sudo rm /boot/kernel/linker.hints
+}
+
 # Check for superuser privileges
 check_superuser
 
@@ -77,11 +97,14 @@ fi
 # Update the pkg repository
 update_pkg_repo
 
+# Install base system and kernel packages
+install_packages "$BASE_PKG_LIST"
+
 # Unlock and remove specified packages
 remove_packages "$REMOVAL_LIST"
 
-# Install base system and kernel packages
-install_packages "$BASE_PKG_LIST"
+# Handle .pkgsave files
+handle_pkgsave_files
 
 # Reboot the system
 echo "Rebooting the system to apply changes..."
