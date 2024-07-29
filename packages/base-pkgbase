@@ -91,8 +91,8 @@ GhostBSD-kerberos
 GhostBSD-kerberos-lib
 GhostBSD-kerberos-lib-man
 GhostBSD-kerberos-man
-# GhostBSD-kernel-generic
-# GhostBSD-kernel-generic-dbg
+GhostBSD-kernel-generic
+GhostBSD-kernel-generic-dbg
 GhostBSD-lib9p
 GhostBSD-libarchive
 GhostBSD-libarchive-man
