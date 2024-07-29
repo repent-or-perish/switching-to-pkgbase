@@ -5,7 +5,6 @@ REPO_CONF="/etc/pkg/GhostBSD.conf"
 NEW_REPO_CONF="/mnt/data/GhostBSD.conf"
 BASE_PKG_LIST="./packages/base-pkgbase"
 REMOVAL_LIST="./packages/removal-list"
-KERNEL_PKG_LIST="./packages/kernel-pkgbase"
 
 # Function to check for superuser privileges
 check_superuser() {
@@ -63,7 +62,6 @@ check_superuser
 # Ensure necessary files exist
 check_file_exists "$BASE_PKG_LIST"
 check_file_exists "$REMOVAL_LIST"
-check_file_exists "$KERNEL_PKG_LIST"
 
 # Compare and copy new repository configuration if it differs
 if [ -f "$NEW_REPO_CONF" ]; then
@@ -79,13 +77,10 @@ fi
 # Update the pkg repository
 update_pkg_repo
 
-# Install kernel and runtime packages
-install_packages "$KERNEL_PKG_LIST"
-
 # Unlock and remove specified packages
 remove_packages "$REMOVAL_LIST"
 
-# Install base system packages
+# Install base system and kernel packages
 install_packages "$BASE_PKG_LIST"
 
 # Reboot the system
@@ -97,4 +92,3 @@ fi
 
 # Script end
 echo "System is rebooting. Please verify the installation after reboot."
-
