@@ -59,10 +59,12 @@ remove_packages() {
     if [ -n "$pkg" ]; then
       echo "Unlocking and removing package: $pkg" >> "$LOGFILE" 2>&1
       if pkg info "$pkg" >/dev/null 2>&1; then
-        if ! yes | pkg set -v 0 "$pkg" && pkg unlock -y "$pkg" && pkg delete -fy "$pkg"; then
-          echo "Error: Failed to unlock and remove $pkg." >> "$LOGFILE" 2>&1
-          exit 1
-        fi
+        echo "Unsetting the vital flag for $pkg" >> "$LOGFILE" 2>&1
+        yes | pkg set -v 0 "$pkg" >> "$LOGFILE" 2>&1
+        echo "Unlocking $pkg" >> "$LOGFILE" 2>&1
+        pkg unlock -y "$pkg" >> "$LOGFILE" 2>&1
+        echo "Deleting $pkg" >> "$LOGFILE" 2>&1
+        pkg delete -fy "$pkg" >> "$LOGFILE" 2>&1
       fi
     fi
   done < "$pkg_list_file"
