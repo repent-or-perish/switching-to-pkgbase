@@ -14,7 +14,7 @@ LOGFILE="/var/log/pkgbase_migration.log"
 # Function to check for superuser privileges
 check_superuser() {
   if [ "$(id -u)" -ne 0 ]; then
-    echo "This script must be run as root. Please use sudo or run as root." | tee -a "$LOGFILE"
+    echo "This script must be run as root. Please use sudo or run as root." >> "$LOGFILE" 2>&1
     exit 1
   fi
 }
@@ -22,16 +22,16 @@ check_superuser() {
 # Ensure the repository configuration exists
 check_file_exists() {
   if [ ! -f "$1" ]; then
-    echo "Error: $1 not found." | tee -a "$LOGFILE"
+    echo "Error: $1 not found." >> "$LOGFILE" 2>&1
     exit 1
   fi
 }
 
 # Update pkg repository
 update_pkg_repo() {
-  echo "Updating pkg repository..." | tee -a "$LOGFILE"
-  if ! pkg update; then
-    echo "Error: Failed to update pkg repository." | tee -a "$LOGFILE"
+  echo "Updating pkg repository..." >> "$LOGFILE" 2>&1
+  if ! pkg update >> "$LOGFILE" 2>&1; then
+    echo "Error: Failed to update pkg repository." >> "$LOGFILE" 2>&1
     exit 1
   fi
 }
@@ -39,12 +39,12 @@ update_pkg_repo() {
 # Install packages from a list
 install_packages() {
   pkg_list_file="$1"
-  echo "Installing packages from $pkg_list_file..." | tee -a "$LOGFILE"
+  echo "Installing packages from $pkg_list_file..." >> "$LOGFILE" 2>&1
   packages=$(cat "$pkg_list_file" | tr -d '\r' | xargs)
-  echo "Packages to install: $packages" | tee -a "$LOGFILE"
+  echo "Packages to install: $packages" >> "$LOGFILE" 2>&1
   if [ -n "$packages" ]; then
-    if ! pkg-static install -y $packages; then
-      echo "Error: Failed to install packages from $pkg_list_file." | tee -a "$LOGFILE"
+    if ! pkg-static install -y $packages >> "$LOGFILE" 2>&1; then
+      echo "Error: Failed to install packages from $pkg_list_file." >> "$LOGFILE" 2>&1
       exit 1
     fi
   fi
@@ -53,14 +53,14 @@ install_packages() {
 # Unlock and remove packages from a list
 remove_packages() {
   pkg_list_file="$1"
-  echo "Unlocking and removing packages from $pkg_list_file..." | tee -a "$LOGFILE"
+  echo "Unlocking and removing packages from $pkg_list_file..." >> "$LOGFILE" 2>&1
   while IFS= read -r pkg; do
     pkg=$(echo "$pkg" | tr -d '\r' | xargs) # Trim leading and trailing whitespace and remove carriage returns
     if [ -n "$pkg" ]; then
-      echo "Unlocking and removing package: $pkg" | tee -a "$LOGFILE"
+      echo "Unlocking and removing package: $pkg" >> "$LOGFILE" 2>&1
       if pkg info "$pkg" >/dev/null 2>&1; then
         if ! pkg set -v 0 "$pkg" && pkg unlock -y "$pkg" && pkg delete -fy "$pkg"; then
-          echo "Error: Failed to unlock and remove $pkg." | tee -a "$LOGFILE"
+          echo "Error: Failed to unlock and remove $pkg." >> "$LOGFILE" 2>&1
           exit 1
         fi
       fi
@@ -70,7 +70,7 @@ remove_packages() {
 
 # Handle .pkgsave files
 handle_pkgsave_files() {
-  echo "Handling .pkgsave files..." | tee -a "$LOGFILE"
+  echo "Handling .pkgsave files..." >> "$LOGFILE" 2>&1
 
   # Essential steps for critical files
   sudo cp /etc/ssh/sshd_config.pkgsave /etc/ssh/sshd_config
@@ -90,19 +90,19 @@ handle_pkgsave_files() {
 
 # Compare and copy new repository configuration if it differs
 replace_repo_conf() {
-  echo "Checking and replacing GhostBSD.conf if necessary..." | tee -a "$LOGFILE"
+  echo "Checking and replacing GhostBSD.conf if necessary..." >> "$LOGFILE" 2>&1
   if [ -f "$NEW_REPO_CONF" ]; then
     if [ ! -f "$REPO_CONF" ] || ! cmp -s "$NEW_REPO_CONF" "$REPO_CONF"; then
-      echo "Copying new GhostBSD.conf to /etc/pkg/GhostBSD.conf..." | tee -a "$LOGFILE"
+      echo "Copying new GhostBSD.conf to /etc/pkg/GhostBSD.conf..." >> "$LOGFILE" 2>&1
       if ! cp "$NEW_REPO_CONF" "$REPO_CONF"; then
-        echo "Error: Failed to copy new GhostBSD.conf." | tee -a "$LOGFILE"
+        echo "Error: Failed to copy new GhostBSD.conf." >> "$LOGFILE" 2>&1
         exit 1
       fi
     else
-      echo "No need to replace GhostBSD.conf, files are identical." | tee -a "$LOGFILE"
+      echo "No need to replace GhostBSD.conf, files are identical." >> "$LOGFILE" 2>&1
     fi
   else
-    echo "Error: New GhostBSD.conf file not found." | tee -a "$LOGFILE"
+    echo "Error: New GhostBSD.conf file not found." >> "$LOGFILE" 2>&1
     exit 1
   fi
 }
@@ -130,11 +130,11 @@ install_packages "$BASE_PKG_LIST"
 handle_pkgsave_files
 
 # Reboot the system
-echo "Rebooting the system to apply changes..." | tee -a "$LOGFILE"
+echo "Rebooting the system to apply changes..." >> "$LOGFILE" 2>&1
 if ! reboot; then
-  echo "Error: Failed to reboot the system." | tee -a "$LOGFILE"
+  echo "Error: Failed to reboot the system." >> "$LOGFILE" 2>&1
   exit 1
 fi
 
 # Script end
-echo "System is rebooting. Please verify the installation after reboot." | tee -a "$LOGFILE"
+echo "System is rebooting. Please verify the installation after reboot." >> "$LOGFILE" 2>&1
